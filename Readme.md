@@ -9,8 +9,6 @@ cd coroutine
 # 编译
 mkdir build && cd build
 cmake .. && make
-# 测试
-make test
 # 运行
 sudo ./coroutine
 ```

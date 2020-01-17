@@ -10,6 +10,6 @@ cd coroutine
 mkdir build && cd build
 cmake .. && make
 # 运行
-sudo ./coroutine
+./coroutine
 ```
 Windows请用msvc编译，Linux请用gcc编译

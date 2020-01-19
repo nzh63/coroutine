@@ -2,11 +2,11 @@
 
 #include <cstdlib>
 
-#ifndef WIN32
-extern "C" void _doSwichTo(void* save, void* load) __attribute__((noinline));
-#else
+#if defined(_MSC_VER)
 extern "C" __declspec(noinline) void __stdcall _doSwichTo(void* save,
                                                           void* load);
+#else
+extern "C" void _doSwichTo(void* save, void* load) __attribute__((noinline));
 #endif
 
 namespace CO {
@@ -67,18 +67,19 @@ void Runtime::spawn(SpawnFunction f) {
     this->coroutines[pos]->state = Coroutine::State::Ready;
     std::uint8_t* s_ptr = this->coroutines[pos]->stack.data() +
                           this->coroutines[pos]->stack.size();
-#ifdef __riscv
+    s_ptr -= (std::uint64_t)s_ptr % 16;
+#if defined(ARCH_RISCV)
     this->coroutines[pos]->ctx.x1 = (std::uint64_t)(void*)guard;
     this->coroutines[pos]->ctx.jump_to = (std::uint64_t)(void*)f;
-    this->coroutines[pos]->ctx.x2 = (std::uint64_t)(void*)(s_ptr - 32);
-#else
-    *(std::uint64_t*)(s_ptr - 24) = (std::uint64_t)(void*)guard;
-    *(std::uint64_t*)(s_ptr - 32) = (std::uint64_t)(void*)f;
-    this->coroutines[pos]->ctx.rsp = (std::uint64_t)(void*)(s_ptr - 32);
+    this->coroutines[pos]->ctx.x2 = (std::uint64_t)(void*)(s_ptr - 0);
+#elif defined(ARCH_x64)
+    *(std::uint64_t*)(s_ptr - 8) = (std::uint64_t)(void*)guard;
+    *(std::uint64_t*)(s_ptr - 16) = (std::uint64_t)(void*)f;
+    this->coroutines[pos]->ctx.rsp = (std::uint64_t)(void*)(s_ptr - 16);
 #ifdef WIN32
     this->coroutines[pos]->ctx.stack_start = (std::uint64_t)(void*)s_ptr;
     this->coroutines[pos]->ctx.stack_end =
-        (std::uint64_t)(void*)(s_ptr - STACK_SIZE);
+        (std::uint64_t)(void*)(s_ptr - STACK_SIZE + 16);
 #endif
 #endif
 }

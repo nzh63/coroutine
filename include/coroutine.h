@@ -17,26 +17,18 @@ class Coroutine {
    protected:
     struct Context {
        public:
-        std::uint64_t
-#ifdef __riscv
-            x1,
-            x2, x8, x9, x18, x19, x20, x21, x22, x23, x24, x25, x26, x27
-#else
-#ifdef WIN32
-            xmm6[2],
-            xmm7[2], xmm8[2], xmm9[2], xmm10[2], xmm11[2], xmm12[2], xmm13[2],
-            xmm14[2], xmm15[2],
-#endif
-            rsp, r12, r13, r14, r15, rbx, rbp
-#ifdef WIN32
-            ,
-            rdi, rsi, stack_start, stack_end
-#endif
-#endif
-            ;
-#ifdef __riscv
+#if defined(ARCH_RISCV)
+        std::uint64_t x1, x2, x8, x9, x18, x19, x20, x21, x22, x23, x24, x25,
+            x26, x27;
         std::uint32_t f8, f9, f18_f27[10];
         std::uint64_t jump_to;
+#elif defined(ARCH_x64)
+        std::uint64_t rsp, r12, r13, r14, r15, rbx, rbp;
+#ifdef WIN32
+        std::uint64_t rdi, rsi, stack_start, stack_end;
+        std::uint64_t xmm6[2], xmm7[2], xmm8[2], xmm9[2], xmm10[2], xmm11[2],
+            xmm12[2], xmm13[2], xmm14[2], xmm15[2];
+#endif
 #endif
     };
     unsigned id;

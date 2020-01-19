@@ -12,4 +12,4 @@ cmake .. && make
 # 运行
 ./coroutine
 ```
-Windows请用msvc编译，Linux请用gcc编译
+在msvc和gcc进行过测试，其他编译器也许能工作。

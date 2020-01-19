@@ -22,6 +22,9 @@ class Coroutine {
             x26, x27;
         std::uint32_t f8, f9, f18_f27[10];
         std::uint64_t jump_to;
+#elif defined(ARCH_ARM)
+        std::uint64_t x18_x28[11], fp, lr, sp, jump_to;
+        std::uint64_t d8_d15[8];
 #elif defined(ARCH_x64)
         std::uint64_t rsp, r12, r13, r14, r15, rbx, rbp;
 #ifdef WIN32

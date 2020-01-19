@@ -72,6 +72,12 @@ void Runtime::spawn(SpawnFunction f) {
     this->coroutines[pos]->ctx.x1 = (std::uint64_t)(void*)guard;
     this->coroutines[pos]->ctx.jump_to = (std::uint64_t)(void*)f;
     this->coroutines[pos]->ctx.x2 = (std::uint64_t)(void*)(s_ptr - 0);
+#elif defined(ARCH_ARM)
+    this->coroutines[pos]->ctx.sp = (std::uint64_t)(void*)(s_ptr - 32);
+    this->coroutines[pos]->ctx.fp = (std::uint64_t)(void*)(s_ptr - 16);
+    static_assert(offsetof(Coroutine::Context, lr) == 96, "");
+    this->coroutines[pos]->ctx.lr = (std::uint64_t)(void*)guard;
+    this->coroutines[pos]->ctx.jump_to = (std::uint64_t)(void*)f;
 #elif defined(ARCH_x64)
     *(std::uint64_t*)(s_ptr - 8) = (std::uint64_t)(void*)guard;
     *(std::uint64_t*)(s_ptr - 16) = (std::uint64_t)(void*)f;

@@ -25,6 +25,9 @@ class Coroutine {
 #elif defined(ARCH_ARM)
         std::uint64_t x18_x28[11], fp, lr, sp, jump_to;
         std::uint64_t d8_d15[8];
+#elif defined(ARCH_MIPS)
+        std::uint64_t s0_s7[8], gp, sp, s8, ra, jump_to;
+        std::uint64_t f20, f22, f24_31[8];
 #elif defined(ARCH_x64)
         std::uint64_t rsp, r12, r13, r14, r15, rbx, rbp;
 #ifdef WIN32
@@ -38,7 +41,7 @@ class Coroutine {
     std::array<std::uint8_t, STACK_SIZE> stack;
     Context ctx;
     enum class State { Idle, Peding, Ready, Running };
-    State state = State::Idle;
+    volatile State state = State::Idle;
     friend class Runtime;
 
    public:

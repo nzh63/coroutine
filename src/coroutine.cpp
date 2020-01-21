@@ -7,6 +7,10 @@ extern "C" __declspec(noinline) void __stdcall _doSwichTo(void* save,
                                                           void* load);
 #else
 extern "C" void _doSwichTo(void* save, void* load) __attribute__((noinline));
+#if defined(ARCH_MIPS)
+extern "C" std::uint64_t _getGP() __attribute__((noinline));
+extern "C" std::uint64_t _mips_guard() __attribute__((noinline));
+#endif
 #endif
 
 namespace CO {
@@ -73,10 +77,16 @@ void Runtime::spawn(SpawnFunction f) {
     this->coroutines[pos]->ctx.jump_to = (std::uint64_t)(void*)f;
     this->coroutines[pos]->ctx.x2 = (std::uint64_t)(void*)(s_ptr - 0);
 #elif defined(ARCH_ARM)
-    this->coroutines[pos]->ctx.sp = (std::uint64_t)(void*)(s_ptr - 32);
-    this->coroutines[pos]->ctx.fp = (std::uint64_t)(void*)(s_ptr - 16);
-    static_assert(offsetof(Coroutine::Context, lr) == 96, "");
+    this->coroutines[pos]->ctx.sp =
+        (std::uint64_t)(void*)(s_ptr - 16);  // Red zone
+    this->coroutines[pos]->ctx.fp = (std::uint64_t)(void*)(s_ptr - 0);
     this->coroutines[pos]->ctx.lr = (std::uint64_t)(void*)guard;
+    this->coroutines[pos]->ctx.jump_to = (std::uint64_t)(void*)f;
+#elif defined(ARCH_MIPS)
+    this->coroutines[pos]->ctx.sp = (std::uint64_t)(void*)(s_ptr - 0);
+    this->coroutines[pos]->ctx.s8 = (std::uint64_t)(void*)(s_ptr - 0);  // fp
+    this->coroutines[pos]->ctx.gp = _getGP();
+    this->coroutines[pos]->ctx.ra = (std::uint64_t)(void*)_mips_guard;
     this->coroutines[pos]->ctx.jump_to = (std::uint64_t)(void*)f;
 #elif defined(ARCH_x64)
     *(std::uint64_t*)(s_ptr - 8) = (std::uint64_t)(void*)guard;

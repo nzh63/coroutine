@@ -13,35 +13,42 @@ IF (CMAKE_SYSTEM_NAME MATCHES "Windows" AND CMAKE_SYSTEM_PROCESSOR MATCHES "AMD6
     enable_language(ASM_MASM)
     set(SOURCES
         ${SOURCES}
-        ${CMAKE_SOURCE_DIR}/src/coroutine-windows-x64.asm
+        ${CMAKE_SOURCE_DIR}/src/coroutine-x64-windows.asm
     )
 ELSEIF (CMAKE_SYSTEM_NAME MATCHES "Windows" AND CMAKE_SYSTEM_PROCESSOR MATCHES "AMD64")
     add_definitions(-DARCH_x64)
     enable_language(ASM)
     set(SOURCES
         ${SOURCES}
-        ${CMAKE_SOURCE_DIR}/src/coroutine-windows-x64.S
+        ${CMAKE_SOURCE_DIR}/src/coroutine-x64-windows.S
     )
 ELSEIF (CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
     add_definitions(-DARCH_x64)
     ENABLE_LANGUAGE(ASM)
     set(SOURCES
         ${SOURCES}
-        ${CMAKE_SOURCE_DIR}/src/coroutine-linux-x64.S
+        ${CMAKE_SOURCE_DIR}/src/coroutine-x64.S
     )
 ELSEIF (CMAKE_SYSTEM_PROCESSOR MATCHES "riscv")
     add_definitions(-DARCH_RISCV)
     ENABLE_LANGUAGE(ASM)
     set(SOURCES
         ${SOURCES}
-        ${CMAKE_SOURCE_DIR}/src/coroutine-linux-riscv.S
+        ${CMAKE_SOURCE_DIR}/src/coroutine-riscv.S
     )
 ELSEIF (CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
     add_definitions(-DARCH_ARM)
     ENABLE_LANGUAGE(ASM)
     set(SOURCES
         ${SOURCES}
-        ${CMAKE_SOURCE_DIR}/src/coroutine-linux-arm.S
+        ${CMAKE_SOURCE_DIR}/src/coroutine-arm.S
+    )
+ELSEIF (CMAKE_SYSTEM_PROCESSOR MATCHES "mips64")
+    add_definitions(-DARCH_MIPS)
+    ENABLE_LANGUAGE(ASM)
+    set(SOURCES
+        ${SOURCES}
+        ${CMAKE_SOURCE_DIR}/src/coroutine-mips64.S
     )
 ELSE()
     message(FATAL_ERROR "Unsupporte platform: " ${CMAKE_SYSTEM_NAME} ${CMAKE_SYSTEM_PROCESSOR})

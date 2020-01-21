@@ -1,6 +1,6 @@
 # 一个C++实现的协程demo
 
-支持的x64、Risc-V、AArch64。
+支持的x64、AArch64、Risc-V和MIPS64。
 ## 编译指南
 ```bash
 # 克隆仓库

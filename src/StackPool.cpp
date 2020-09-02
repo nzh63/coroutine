@@ -14,11 +14,20 @@
  * limitations under the License.
  */
 
-#pragma once
-#ifndef COROUTINE_H
-#define COROUTINE_H
+#include "StackPool.h"
 
-#include "Routine.h"
-#include "Runtime.h"
+namespace CO {
+StackPool::StackPool(std::size_t size, std::size_t count) : count(count) {
+    this->stacks = new Stack*[this->count];
+    for (std::size_t i = 0; i < this->count; i++) {
+        this->stacks[i] = new Stack(size);
+    }
+}
 
-#endif
+StackPool::~StackPool() {
+    for (std::size_t i = 0; i < this->count; i++) {
+        delete this->stacks[i];
+    }
+    delete[] this->stacks;
+}
+}  // namespace CO

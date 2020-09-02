@@ -15,10 +15,29 @@
  */
 
 #pragma once
-#ifndef COROUTINE_H
-#define COROUTINE_H
+#ifndef SHARE_STACK_H
+#define SHARE_STACK_H
 
-#include "Routine.h"
-#include "Runtime.h"
+#include <cstddef>
+#include <cstdint>
+
+namespace CO {
+class Routine;
+class Stack {
+   protected:
+    Routine* routine = nullptr;
+    std::uint8_t* stack_data = nullptr;
+    std::size_t stack_size;
+    friend class Runtime;
+    friend class Routine;
+
+   public:
+    Stack(std::size_t stack_size);
+    ~Stack();
+
+    std::uint8_t* bp();
+};
+
+}  // namespace CO
 
 #endif

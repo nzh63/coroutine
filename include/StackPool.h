@@ -15,10 +15,25 @@
  */
 
 #pragma once
-#ifndef COROUTINE_H
-#define COROUTINE_H
+#ifndef STACK_POOL_H
+#define STACK_POOL_H
 
-#include "Routine.h"
-#include "Runtime.h"
+#include <cstddef>
+
+#include "Stack.h"
+
+namespace CO {
+class Runtime;
+class StackPool {
+   protected:
+    Stack **stacks = nullptr;
+    std::size_t count = 0, rr_ptr = 0;
+    friend class Runtime;
+
+   public:
+    StackPool(std::size_t size, std::size_t count);
+    ~StackPool();
+};
+}  // namespace CO
 
 #endif

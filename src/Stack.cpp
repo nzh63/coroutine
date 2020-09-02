@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-#pragma once
-#ifndef COROUTINE_H
-#define COROUTINE_H
+#include "Stack.h"
 
-#include "Routine.h"
-#include "Runtime.h"
+namespace CO {
+Stack::Stack(std::size_t stack_size) : stack_size(stack_size) {
+    this->stack_data = new std::uint8_t[this->stack_size];
+}
+Stack::~Stack() { delete[] this->stack_data; }
 
-#endif
+std::uint8_t* Stack::bp() { return this->stack_data + this->stack_size; }
+}  // namespace CO

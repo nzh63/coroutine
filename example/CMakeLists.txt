@@ -1,0 +1,4 @@
+add_executable(example_share_stack example_share_stack.cpp)
+target_link_libraries(example_share_stack coroutine)
+add_executable(example_exclusive_stack example_exclusive_stack.cpp)
+target_link_libraries(example_exclusive_stack coroutine)

@@ -13,12 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+.globl _doSwichTo
+.globl __doSwichTo
+_doSwichTo:
+__doSwichTo:
+mov %rsp, 0x00(%rdi)
+mov %r12, 0x08(%rdi)
+mov %r13, 0x10(%rdi)
+mov %r14, 0x18(%rdi)
+mov %r15, 0x20(%rdi)
+mov %rbx, 0x28(%rdi)
+mov %rbp, 0x30(%rdi)
 
-#pragma once
-#ifndef COROUTINE_H
-#define COROUTINE_H
+mov 0x00(%rsi), %rsp
+mov 0x08(%rsi), %r12
+mov 0x10(%rsi), %r13
+mov 0x18(%rsi), %r14
+mov 0x20(%rsi), %r15
+mov 0x28(%rsi), %rbx
+mov 0x30(%rsi), %rbp
 
-#include "Routine.h"
-#include "Runtime.h"
-
-#endif
+retq

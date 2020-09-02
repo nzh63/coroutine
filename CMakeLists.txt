@@ -3,56 +3,71 @@ project(coroutine VERSION 0.1.0)
 
 set(CMAKE_CXX_STANDARD 11)
 
+option(CO_BUILD_TEST "Build test for coroutine" ON)
+option(CO_BUILD_EXAMPLE "Build example for coroutine" ON)
 
 set(SOURCES
-    ${CMAKE_SOURCE_DIR}/src/coroutine.cpp
-    ${CMAKE_SOURCE_DIR}/src/main.cpp
+    ${CMAKE_SOURCE_DIR}/src/Routine.cpp
+    ${CMAKE_SOURCE_DIR}/src/Runtime.cpp
+    ${CMAKE_SOURCE_DIR}/src/Stack.cpp
+    ${CMAKE_SOURCE_DIR}/src/StackPool.cpp
 )
-IF (CMAKE_SYSTEM_NAME MATCHES "Windows" AND CMAKE_SYSTEM_PROCESSOR MATCHES "AMD64" AND MSVC)
+if (CMAKE_SYSTEM_NAME MATCHES "Windows" AND CMAKE_SYSTEM_PROCESSOR MATCHES "AMD64" AND MSVC)
     add_definitions(-DARCH_x64)
     enable_language(ASM_MASM)
     set(SOURCES
         ${SOURCES}
-        ${CMAKE_SOURCE_DIR}/src/coroutine-x64-windows.asm
+        ${CMAKE_SOURCE_DIR}/src/arch/x64-windows.asm
     )
-ELSEIF (CMAKE_SYSTEM_NAME MATCHES "Windows" AND CMAKE_SYSTEM_PROCESSOR MATCHES "AMD64")
+elseif (CMAKE_SYSTEM_NAME MATCHES "Windows" AND CMAKE_SYSTEM_PROCESSOR MATCHES "AMD64")
     add_definitions(-DARCH_x64)
     enable_language(ASM)
     set(SOURCES
         ${SOURCES}
-        ${CMAKE_SOURCE_DIR}/src/coroutine-x64-windows.S
+        ${CMAKE_SOURCE_DIR}/src/arch/x64-windows.S
     )
-ELSEIF (CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
+elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
     add_definitions(-DARCH_x64)
     ENABLE_LANGUAGE(ASM)
     set(SOURCES
         ${SOURCES}
-        ${CMAKE_SOURCE_DIR}/src/coroutine-x64.S
+        ${CMAKE_SOURCE_DIR}/src/arch/x64.S
     )
-ELSEIF (CMAKE_SYSTEM_PROCESSOR MATCHES "riscv")
+elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "riscv64")
     add_definitions(-DARCH_RISCV)
     ENABLE_LANGUAGE(ASM)
     set(SOURCES
         ${SOURCES}
-        ${CMAKE_SOURCE_DIR}/src/coroutine-riscv.S
+        ${CMAKE_SOURCE_DIR}/src/arch/riscv64.S
     )
-ELSEIF (CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
-    add_definitions(-DARCH_ARM)
+elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
+    add_definitions(-DARCH_AARCH64)
     ENABLE_LANGUAGE(ASM)
     set(SOURCES
         ${SOURCES}
-        ${CMAKE_SOURCE_DIR}/src/coroutine-arm.S
+        ${CMAKE_SOURCE_DIR}/src/arch/aarch64.S
     )
-ELSEIF (CMAKE_SYSTEM_PROCESSOR MATCHES "mips64")
-    add_definitions(-DARCH_MIPS)
+elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "mips64")
+    add_definitions(-DARCH_MIPS64)
     ENABLE_LANGUAGE(ASM)
     set(SOURCES
         ${SOURCES}
-        ${CMAKE_SOURCE_DIR}/src/coroutine-mips64.S
+        ${CMAKE_SOURCE_DIR}/src/arch/mips64.S
     )
-ELSE()
+else()
     message(FATAL_ERROR "Unsupporte platform: " ${CMAKE_SYSTEM_NAME} ${CMAKE_SYSTEM_PROCESSOR})
-ENDIF()
+endif()
 
 include_directories(include)
-add_executable(coroutine ${SOURCES})
+add_library(coroutine STATIC
+    ${SOURCES}
+)
+
+if (CO_BUILD_EXAMPLE)
+    add_subdirectory(example)
+endif()
+
+if (CO_BUILD_TEST)
+    enable_testing()
+    add_subdirectory(test)
+endif()

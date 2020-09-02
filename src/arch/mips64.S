@@ -1,5 +1,22 @@
+/*
+ * Copyright 2020 nzh63
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 .globl _doSwichTo
+.globl __doSwichTo
 _doSwichTo:
+__doSwichTo:
 sd $s0, 0x00($a0)
 sd $s1, 0x08($a0)
 sd $s2, 0x10($a0)
@@ -51,11 +68,16 @@ l.d $f31, 0xb0($a1)
 jr $t9
 
 .globl _getGP
+.globl __getGP
 _getGP:
+__getGP:
 or $v0, $0, $gp
 jr $ra
 
 .globl _mips_guard
+.globl __mips_guard
 _mips_guard:
-ld	$t9, %call16(_ZN2CO5guardEv)($28)
+__mips_guard:
+ld $t9, 0x0($sp)
+daddi $sp, $sp, 8
 jr $t9

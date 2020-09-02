@@ -1,0 +1,78 @@
+trigger:
+- master
+- next
+
+jobs:
+- job: 'Build_And_Test'
+  strategy:
+    matrix:
+      Windows:
+        vmImage: windows-latest
+      Linux:
+        vmImage: ubuntu-latest
+      MacOS:
+        vmImage: macOS-latest
+  pool:
+    vmImage: $(vmImage)
+
+  steps:
+  - task: CMake@1
+    inputs:
+      workingDirectory: '$(Build.SourcesDirectory)/build'
+      cmakeArgs: '$(Build.SourcesDirectory) -DCMAKE_BUILD_TYPE=Release'
+    displayName: "CMake Configure and Generate"
+
+  - script: |
+      cmake --build $(Build.SourcesDirectory)/build -j8
+    displayName: "Build"
+
+  - script: |
+      cd $(Build.SourcesDirectory)/build && ctest
+    displayName: "Test"
+
+- job: 'Build_And_Test_QEMU'
+  strategy:
+    matrix:
+      Linux_AArch64:
+        APT_INSTALL_PKG: gcc-aarch64-linux-gnu g++-aarch64-linux-gnu libc6-arm64-cross qemu-user
+        CMAKE_SYSTEM_NAME: Linux
+        CMAKE_SYSTEM_PROCESSOR: aarch64
+        CMAKE_C_COMPILER: aarch64-linux-gnu-gcc
+        CMAKE_CXX_COMPILER: aarch64-linux-gnu-g++
+        CMAKE_CROSSCOMPILING_EMULATOR: qemu-aarch64;-L;/usr/aarch64-linux-gnu/
+      Linux_MIPS64:
+        APT_INSTALL_PKG: gcc-mips64-linux-gnuabi64 g++-mips64-linux-gnuabi64 libc6-mips64-cross qemu-user
+        CMAKE_SYSTEM_NAME: Linux
+        CMAKE_SYSTEM_PROCESSOR: mips64
+        CMAKE_C_COMPILER: mips64-linux-gnuabi64-gcc
+        CMAKE_CXX_COMPILER: mips64-linux-gnuabi64-g++
+        CMAKE_CROSSCOMPILING_EMULATOR: qemu-mips64;-L;/usr/mips64-linux-gnuabi64/
+      Linux_RISCV64:
+        APT_INSTALL_PKG: gcc-riscv64-linux-gnu g++-riscv64-linux-gnu libc6-riscv64-cross qemu-user
+        CMAKE_SYSTEM_NAME: Linux
+        CMAKE_SYSTEM_PROCESSOR: riscv64
+        CMAKE_C_COMPILER: riscv64-linux-gnu-gcc
+        CMAKE_CXX_COMPILER: riscv64-linux-gnu-g++
+        CMAKE_CROSSCOMPILING_EMULATOR: qemu-riscv64;-L;/usr/riscv64-linux-gnu/
+  pool:
+    vmImage: ubuntu-20.04
+
+  steps:
+  - script: |
+      sudo apt update
+      sudo apt install $(APT_INSTALL_PKG)
+    displayName: "Install dependence"
+
+  - task: CMake@1
+    inputs:
+      workingDirectory: '$(Build.SourcesDirectory)/build'
+      cmakeArgs: '$(Build.SourcesDirectory) -DCMAKE_BUILD_TYPE=Release -DCMAKE_SYSTEM_NAME=$(CMAKE_SYSTEM_NAME) -DCMAKE_SYSTEM_PROCESSOR=$(CMAKE_SYSTEM_PROCESSOR) -DCMAKE_C_COMPILER=$(CMAKE_C_COMPILER) -DCMAKE_CXX_COMPILER=$(CMAKE_CXX_COMPILER) -DCMAKE_CROSSCOMPILING_EMULATOR=$(CMAKE_CROSSCOMPILING_EMULATOR)'
+    displayName: "CMake Configure and Generate"
+
+  - script: |
+      cmake --build $(Build.SourcesDirectory)/build -j8
+    displayName: "Build"
+
+  - script: |
+      cd $(Build.SourcesDirectory)/build && ctest
+    displayName: "Test"

@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-#pragma once
-#ifndef COROUTINE_H
-#define COROUTINE_H
+#include <gtest/gtest.h>
 
-#include "Routine.h"
-#include "Runtime.h"
-
-#endif
+int main(int argc, char **argv) {
+    testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
+}

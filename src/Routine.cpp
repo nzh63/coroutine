@@ -32,6 +32,8 @@ void Routine::saveStack() {
         this->ctx.x2
 #elif defined(ARCH_x64)
         this->ctx.rsp
+#elif defined(ARCH_x86)
+        this->ctx.esp
 #else
         this->ctx.sp
 #endif

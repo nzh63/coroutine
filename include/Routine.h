@@ -54,6 +54,8 @@ class Routine {
         std::uint64_t xmm6[2], xmm7[2], xmm8[2], xmm9[2], xmm10[2], xmm11[2],
             xmm12[2], xmm13[2], xmm14[2], xmm15[2];
 #endif
+#elif defined(ARCH_x86)
+        std::uint32_t ebx, ecx, edx, esi, edi, esp, edp;
 #endif
     };
     bool share_stack;

@@ -197,6 +197,17 @@ void Runtime::_spawn(SpawnFunction f,
     routine->ctx.stack_start = (std::uint64_t)(void*)s_ptr;
     routine->ctx.stack_end = (std::uint64_t)(void*)(routine->stack->stack_data);
 #endif
+#elif defined(ARCH_x86)
+    *(std::uint32_t*)(s_ptr - 4) = (std::uint32_t)(void*)CO::guard;
+#if defined(_MSC_VER)
+    *(std::uint32_t*)(s_ptr - 16) =
+        (std::uint32_t)(void*)CO::Runtime::_spawn_start;
+    routine->ctx.esp = (std::uint32_t)(void*)(s_ptr - 16);
+#else
+    *(std::uint32_t*)(s_ptr - 8) =
+        (std::uint32_t)(void*)CO::Runtime::_spawn_start;
+    routine->ctx.esp = (std::uint32_t)(void*)(s_ptr - 8);
+#endif
 #endif
     routine->f = f;
 }

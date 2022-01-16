@@ -16,18 +16,26 @@
 
 #include "StackPool.h"
 
-namespace CO {
-StackPool::StackPool(std::size_t size, std::size_t count) : count(count) {
-    this->stacks = new Stack*[this->count];
-    for (std::size_t i = 0; i < this->count; i++) {
-        this->stacks[i] = new Stack(size);
+namespace co {
+StackPool::StackPool(std::size_t size, std::size_t count) : count_(count) {
+    this->stacks_ = new Stack*[this->count_];
+    for (std::size_t i = 0; i < this->count_; i++) {
+        this->stacks_[i] = new Stack(size);
     }
 }
 
 StackPool::~StackPool() {
-    for (std::size_t i = 0; i < this->count; i++) {
-        delete this->stacks[i];
+    for (std::size_t i = 0; i < this->count_; i++) {
+        delete this->stacks_[i];
     }
-    delete[] this->stacks;
+    delete[] this->stacks_;
 }
-}  // namespace CO
+
+Stack* StackPool::next() {
+    auto* ret = this->stacks_[this->rr_ptr_];
+    this->rr_ptr_++;
+    if (this->rr_ptr_ == this->count_) this->rr_ptr_ = 0;
+    return ret;
+}
+
+}  // namespace co

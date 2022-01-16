@@ -18,7 +18,10 @@
 #ifndef COROUTINE_H
 #define COROUTINE_H
 
+#include "Promise.h"
 #include "Routine.h"
 #include "Runtime.h"
+#include "Stack.h"
+#include "StackPool.h"
 
 #endif

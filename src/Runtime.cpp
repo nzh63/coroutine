@@ -26,24 +26,18 @@ extern "C" __declspec(noinline) void __stdcall _doSwichTo(void* save,
                                                           void* load);
 #else
 extern "C" void _doSwichTo(void* save, void* load) __attribute__((noinline));
-#if defined(ARCH_MIPS64)
-extern "C" std::uint64_t _getGP() __attribute__((noinline));
-extern "C" std::uint64_t _mips_guard() __attribute__((noinline));
-#endif
 #endif
 
-namespace CO {
-namespace {
-void guard() { Runtime::instance()->guard(); }
-}  // namespace
+namespace co {
 
 Runtime::Runtime() {
-    this->current = this->mainRoutine();
-    this->rr_ptr = this->last_routines = this->routines.begin();
-    this->current->state = Routine::State::Running;
+    this->routines_.emplace_front();
+    this->current_ = this->mainRoutine();
+    this->current_->state_ = Routine::State::Running;
+    this->rr_ptr_ = this->last_routines_ = this->routines_.begin();
 }
 
-Routine* Runtime::mainRoutine() { return &this->routines.front(); }
+Routine* Runtime::mainRoutine() { return &this->routines_.front(); }
 
 Runtime* Runtime::instance() {
     static Runtime* _runtime = nullptr;
@@ -51,171 +45,98 @@ Runtime* Runtime::instance() {
     return _runtime;
 }
 
-bool Runtime::yield() {
-    assert(this->current->state == Routine::State::Running ||
-           this->current->state == Routine::State::Idle ||
-           this->current == this->mainRoutine());
+bool Runtime::yield(bool await_for_other) {
+    assert(this->current_->state_ == Routine::State::Running ||
+           this->current_->state_ == Routine::State::Idle ||
+           this->current_ == this->mainRoutine());
     Routine* next = nullptr;
     {
-        auto nextIt = std::next(this->rr_ptr);
-        if (nextIt == this->routines.end()) nextIt = this->routines.begin();
-        while (nextIt->state != Routine::State::Ready) {
-            if (nextIt == this->rr_ptr) return false;
+        auto nextIt = std::next(this->rr_ptr_);
+        if (nextIt == this->routines_.end()) nextIt = this->routines_.begin();
+        while (nextIt->state_ != Routine::State::Ready) {
+            if (nextIt == this->rr_ptr_) return false;
             nextIt++;
-            if (nextIt == this->routines.end()) nextIt = this->routines.begin();
+            if (nextIt == this->routines_.end())
+                nextIt = this->routines_.begin();
         }
         next = &*nextIt;
-        if (!(this->current->share_stack && next->share_stack &&
-              this->current->stack == next->stack)) {
-            this->rr_ptr = nextIt;
+        if (!(this->current_->share_stack_ && next->share_stack_ &&
+              this->current_->stack_ == next->stack_)) {
+            this->rr_ptr_ = nextIt;
         }
     }
-    if (this->current->share_stack && next->share_stack &&
-        this->current->stack == next->stack) {
+
+    if (this->current_->share_stack_ && next->share_stack_ &&
+        this->current_->stack_ == next->stack_) {
         this->swichTo(this->mainRoutine());
         return true;
     }
-    if (this->current->state != Routine::State::Idle)
-        this->current->state = Routine::State::Ready;
-    next->state = Routine::State::Running;
-    this->swichTo(&*next);
+    if (this->current_->state_ == Routine::State::Running)
+        this->current_->state_ =
+            await_for_other ? Routine::State::Peding : Routine::State::Ready;
+    next->state_ = Routine::State::Running;
+    this->swichTo(next);
     return true;
 }
+
 void Runtime::swichTo(Routine* next) {
-    if (this->current == next) return;
-    auto save = &this->current->ctx;
-    auto load = &next->ctx;
-    assert(next->stack != this->current->stack);
-    if (next->share_stack && next->stack->routine != &*next) {
-        auto* r = next->stack->routine;
+    if (this->current_ == next) return;
+    assert(this->current_->stack_ == nullptr ||
+           this->current_->stack_ != next->stack_);
+    auto* save = &this->current_->ctx_;
+    auto* load = &next->ctx_;
+    if (next->share_stack_ && next->stack_->routine_ != &*next) {
+        auto* r = next->stack_->routine_;
         if (r) {
             r->saveStack();
         }
         next->loadStack();
     }
-    this->current = next;
+    this->current_ = next;
     _doSwichTo((void*)save, (void*)load);
-    assert(this->current != next);
-    return;
+    assert(this->current_ != next);
+    this->current_->runDefers();
 }
+
 void Runtime::run() {
     while (this->yield())
         ;
 }
 
 void Runtime::guard() {
-    if (this->current != this->mainRoutine()) {
-        this->current->state = Routine::State::Idle;
-        if (this->current->share_stack) {
-            this->current->stack->routine = nullptr;
-        }
-        this->yield();
-    }
+    assert(this->current_ != this->mainRoutine());
+    this->current_->state_ = Routine::State::Idle;
+    this->current_->~Routine();
+    this->yield();
 }
+
+void Runtime::spawn(Runtime::SpawnFunction f, std::size_t stack_size) {
+    auto* routine = &*this->newRoutine();
+    new (routine) Routine(f, stack_size);
+}
+
+void Runtime::spawn(Runtime::SpawnFunction f, Stack* share_stack) {
+    auto* routine = &*this->newRoutine();
+    new (routine) Routine(f, share_stack);
+}
+
+void Runtime::spawn(Runtime::SpawnFunction f, StackPool* share_stack_pool) {
+    spawn(f, share_stack_pool->next());
+}
+
 std::forward_list<Routine>::iterator Runtime::newRoutine() {
-    auto routine = this->routines.end();
-    for (auto it = this->routines.begin(); it != this->routines.end(); it++) {
-        if (it->state == Routine::State::Idle) {
+    auto routine = this->routines_.end();
+    for (auto it = this->routines_.begin(); it != this->routines_.end(); it++) {
+        if (it->state_ == Routine::State::Idle) {
             routine = it;
             break;
         }
     }
-    if (routine == this->routines.end()) {
-        routine = this->routines.emplace_after(this->last_routines);
-        this->last_routines = routine;
+    if (routine == this->routines_.end()) {
+        routine = this->routines_.emplace_after(this->last_routines_);
+        this->last_routines_ = routine;
     }
     return routine;
 }
 
-void Runtime::spawn(SpawnFunction f, std::size_t stack_size) {
-    auto routine = this->newRoutine();
-    if (routine->share_stack) {
-        routine->share_stack = false;
-        routine->stack = nullptr;
-    }
-    if (routine->stack && routine->stack->stack_size != stack_size) {
-        delete routine->stack;
-        routine->stack = new Stack(stack_size);
-    }
-    if (!routine->stack) {
-        routine->stack = new Stack(stack_size);
-    }
-    routine->stack->routine = &*routine;
-    routine->share_stack = false;
-    routine->state = Routine::State::Ready;
-    _spawn(f, routine);
-}
-
-void Runtime::spawn(SpawnFunction f, Stack* share_stack) {
-    auto routine = this->newRoutine();
-    if (routine->stack && !routine->share_stack) {
-        delete routine->stack;
-    }
-    if (share_stack->routine != nullptr) {
-        share_stack->routine->saveStack();
-    }
-    routine->stack = share_stack;
-    routine->stack->routine = &*routine;
-    routine->share_stack = true;
-    routine->state = Routine::State::Ready;
-    _spawn(f, routine);
-}
-
-void Runtime::spawn(SpawnFunction f, StackPool* share_stack_pool) {
-    spawn(f, share_stack_pool->stacks[share_stack_pool->rr_ptr]);
-    share_stack_pool->rr_ptr++;
-    if (share_stack_pool->rr_ptr == share_stack_pool->count)
-        share_stack_pool->rr_ptr = 0;
-}
-
-void Runtime::_spawn(SpawnFunction f,
-                     std::forward_list<Routine>::iterator routine) {
-    std::uint8_t* s_ptr = routine->stack->bp();
-    s_ptr -= (std::uint64_t)s_ptr % 16;
-#if defined(ARCH_RISCV)
-    routine->ctx.x1 = (std::uint64_t)(void*)CO::guard;
-    routine->ctx.jump_to = (std::uint64_t)(void*)CO::Runtime::_spawn_start;
-    routine->ctx.x2 = (std::uint64_t)(void*)(s_ptr - 0);
-#elif defined(ARCH_AARCH64)
-    routine->ctx.sp = (std::uint64_t)(void*)(s_ptr - 16);  // Red zone
-    routine->ctx.fp = (std::uint64_t)(void*)(s_ptr - 0);
-    routine->ctx.lr = (std::uint64_t)(void*)CO::guard;
-    routine->ctx.jump_to = (std::uint64_t)(void*)CO::Runtime::_spawn_start;
-#elif defined(ARCH_MIPS64)
-    routine->ctx.sp = (std::uint64_t)(void*)(s_ptr - 8);
-    *(std::uint64_t*)(s_ptr - 8) = (std::uint64_t)(void*)CO::guard;
-    routine->ctx.s8 = (std::uint64_t)(void*)(s_ptr - 0);  // fp
-    routine->ctx.gp = _getGP();
-    routine->ctx.ra = (std::uint64_t)(void*)_mips_guard;
-    routine->ctx.jump_to = (std::uint64_t)(void*)CO::Runtime::_spawn_start;
-#elif defined(ARCH_x64)
-    *(std::uint64_t*)(s_ptr - 8) = (std::uint64_t)(void*)CO::guard;
-    *(std::uint64_t*)(s_ptr - 16) =
-        (std::uint64_t)(void*)CO::Runtime::_spawn_start;
-    routine->ctx.rsp = (std::uint64_t)(void*)(s_ptr - 16);
-#ifdef WIN32
-    routine->ctx.stack_start = (std::uint64_t)(void*)s_ptr;
-    routine->ctx.stack_end = (std::uint64_t)(void*)(routine->stack->stack_data);
-#endif
-#elif defined(ARCH_x86)
-    *(std::uint32_t*)(s_ptr - 4) = (std::uint32_t)(void*)CO::guard;
-#if defined(_MSC_VER)
-    *(std::uint32_t*)(s_ptr - 16) =
-        (std::uint32_t)(void*)CO::Runtime::_spawn_start;
-    routine->ctx.esp = (std::uint32_t)(void*)(s_ptr - 16);
-#else
-    *(std::uint32_t*)(s_ptr - 8) =
-        (std::uint32_t)(void*)CO::Runtime::_spawn_start;
-    routine->ctx.esp = (std::uint32_t)(void*)(s_ptr - 8);
-#endif
-#endif
-    routine->f = f;
-}
-
-void Runtime::_spawn_start() {
-    auto* runtime = Runtime::instance();
-    auto f = runtime->current->f;
-    f();
-}
-
-}  // namespace CO
+}  // namespace co

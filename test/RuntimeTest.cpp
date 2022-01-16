@@ -16,11 +16,41 @@
 
 #include <gtest/gtest.h>
 
+#include <iostream>
+
 #include "coroutine.h"
 
-using namespace CO;
+namespace co {
 
-TEST(CO, ShareeStack) {
+TEST(Runtime, spawnWithExclusiveStack) {
+    int count = 0;
+    auto* runtime = Runtime::instance();
+    runtime->spawn([runtime, &count]() {
+        for (int i = 0; i < 11; i++) {
+            count++;
+            EXPECT_EQ(count, i * 3 + 1);
+            runtime->yield();
+        }
+    });
+    runtime->spawn([runtime, &count]() {
+        for (int i = 0; i < 10; i++) {
+            count++;
+            EXPECT_EQ(count, i * 3 + 2);
+            runtime->yield();
+        }
+    });
+    runtime->spawn([runtime, &count]() {
+        for (int i = 0; i < 10; i++) {
+            count++;
+            EXPECT_EQ(count, i * 3 + 3);
+            runtime->yield();
+        }
+    });
+    runtime->run();
+    EXPECT_EQ(count, 31);
+}
+
+TEST(Runtime, spawnWithShareStack) {
     int count = 0;
     auto* runtime = Runtime::instance();
     auto* stack = new StackPool(128 * 1024, 3);
@@ -70,5 +100,8 @@ TEST(CO, ShareeStack) {
         },
         stack);
     runtime->run();
+    EXPECT_EQ(count, 51);
     delete stack;
 }
+
+}  // namespace co

@@ -4,11 +4,11 @@ C++实现的协程库
 
 ## 经过测试的平台
 
-|         | x86 | x64 | AArch64 | MIPS64 | RISC-V64 |
-| ------- | --- | --- | ------- | ------ | -------- |
-| Linux   | ✔   | ✔   | ✔       | ✔      | ✔        |
-| Windows | ✔   | ✔   | -       | -      | -        |
-| MacOS   | -   | ✔   | -       | -      | -        |
+| | x86 | x64 | AArch64 | MIPS64 | RISC-V64 |
+| - | - | - | - | - | - |
+| Linux | [![Build Status](https://dev.azure.com/nzh21/coroutine/_apis/build/status/nzh63.coroutine?branchName=master&jobName=Build_And_Test_QEMU&configuration=Build_And_Test_QEMU%20x86_Linux)](https://dev.azure.com/nzh21/coroutine/_build/latest?definitionId=6&branchName=master) | [![Build Status](https://dev.azure.com/nzh21/coroutine/_apis/build/status/nzh63.coroutine?branchName=master&jobName=Build_And_Test&configuration=Build_And_Test%20x64_Linux)](https://dev.azure.com/nzh21/coroutine/_build/latest?definitionId=6&branchName=master) | [![Build Status](https://dev.azure.com/nzh21/coroutine/_apis/build/status/nzh63.coroutine?branchName=master&jobName=Build_And_Test_QEMU&configuration=Build_And_Test_QEMU%20AArch64_Linux)](https://dev.azure.com/nzh21/coroutine/_build/latest?definitionId=6&branchName=master) | [![Build Status](https://dev.azure.com/nzh21/coroutine/_apis/build/status/nzh63.coroutine?branchName=master&jobName=Build_And_Test_QEMU&configuration=Build_And_Test_QEMU%20MIPS64_Linux)](https://dev.azure.com/nzh21/coroutine/_build/latest?definitionId=6&branchName=master) | [![Build Status](https://dev.azure.com/nzh21/coroutine/_apis/build/status/nzh63.coroutine?branchName=master&jobName=Build_And_Test_QEMU&configuration=Build_And_Test_QEMU%20RISCV64_Linux)](https://dev.azure.com/nzh21/coroutine/_build/latest?definitionId=6&branchName=master) |
+| Windows | [![Build Status](https://dev.azure.com/nzh21/coroutine/_apis/build/status/nzh63.coroutine?branchName=master&jobName=Build_And_Test&configuration=Build_And_Test%20x86_Windows)](https://dev.azure.com/nzh21/coroutine/_build/latest?definitionId=6&branchName=master) | [![Build Status](https://dev.azure.com/nzh21/coroutine/_apis/build/status/nzh63.coroutine?branchName=master&jobName=Build_And_Test&configuration=Build_And_Test%20x64_Windows)](https://dev.azure.com/nzh21/coroutine/_build/latest?definitionId=6&branchName=master) | - | - | - |
+| MacOS | - | [![Build Status](https://dev.azure.com/nzh21/coroutine/_apis/build/status/nzh63.coroutine?branchName=master&jobName=Build_And_Test&configuration=Build_And_Test%20x64_MacOS)](https://dev.azure.com/nzh21/coroutine/_build/latest?definitionId=6&branchName=master) | - | - | - |
 
 ## 使用方法
 

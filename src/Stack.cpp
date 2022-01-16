@@ -16,11 +16,11 @@
 
 #include "Stack.h"
 
-namespace CO {
-Stack::Stack(std::size_t stack_size) : stack_size(stack_size) {
-    this->stack_data = new std::uint8_t[this->stack_size];
+namespace co {
+Stack::Stack(std::size_t stack_size) : stack_size_(stack_size) {
+    this->stack_data_ = new std::uint8_t[this->stack_size_];
 }
-Stack::~Stack() { delete[] this->stack_data; }
+Stack::~Stack() { delete[] this->stack_data_; }
 
-std::uint8_t* Stack::bp() { return this->stack_data + this->stack_size; }
-}  // namespace CO
+std::uint8_t* Stack::bp() { return this->stack_data_ + this->stack_size_; }
+}  // namespace co

@@ -18,7 +18,7 @@
 
 #include "coroutine.h"
 
-using namespace CO;
+using namespace co;
 
 int main() {
     std::cout << "Hello" << std::endl;

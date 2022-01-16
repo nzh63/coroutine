@@ -24,33 +24,36 @@
 #include "Stack.h"
 #include "StackPool.h"
 
-namespace CO {
+namespace co {
 class Runtime {
    public:
-    // typedef void (*SpawnFunction)();
     typedef Routine::SpawnFunction SpawnFunction;
 
    protected:
-    std::forward_list<Routine> routines{Routine()};
-    Routine* current;
-    std::forward_list<Routine>::iterator last_routines, rr_ptr;
     Runtime();
-    Routine* mainRoutine();
-    void swichTo(Routine* next);
-    std::forward_list<Routine>::iterator newRoutine();
-    void _spawn(SpawnFunction f, std::forward_list<Routine>::iterator routine);
-    static void _spawn_start();
 
    public:
     static Runtime* instance();
 
-    bool yield();
-    void guard();
+   public:
+    bool yield(bool await_for_other = false);
     void run();
     void spawn(SpawnFunction f, std::size_t stack_size = 128 * 1024);
     void spawn(SpawnFunction f, Stack* share_stack);
     void spawn(SpawnFunction f, StackPool* share_stack_pool);
+
+   protected:
+    Routine* mainRoutine();
+    void swichTo(Routine* next);
+    std::forward_list<Routine>::iterator newRoutine();
+    void guard();
+
+   protected:
+    friend class Routine;
+    std::forward_list<Routine> routines_;
+    Routine* current_;
+    std::forward_list<Routine>::iterator last_routines_, rr_ptr_;
 };
-}  // namespace CO
+}  // namespace co
 
 #endif

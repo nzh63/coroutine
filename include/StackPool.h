@@ -22,18 +22,20 @@
 
 #include "Stack.h"
 
-namespace CO {
+namespace co {
 class Runtime;
 class StackPool {
-   protected:
-    Stack **stacks = nullptr;
-    std::size_t count = 0, rr_ptr = 0;
-    friend class Runtime;
-
    public:
     StackPool(std::size_t size, std::size_t count);
     ~StackPool();
+
+   public:
+    Stack* next();
+
+   protected:
+    Stack** stacks_ = nullptr;
+    std::size_t count_ = 0, rr_ptr_ = 0;
 };
-}  // namespace CO
+}  // namespace co
 
 #endif

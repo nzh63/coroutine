@@ -21,23 +21,24 @@
 #include <cstddef>
 #include <cstdint>
 
-namespace CO {
+namespace co {
 class Routine;
 class Stack {
-   protected:
-    Routine* routine = nullptr;
-    std::uint8_t* stack_data = nullptr;
-    std::size_t stack_size;
-    friend class Runtime;
-    friend class Routine;
-
    public:
     Stack(std::size_t stack_size);
     ~Stack();
 
+   public:
     std::uint8_t* bp();
+
+   protected:
+    friend class Routine;
+    friend class Runtime;
+    Routine* routine_ = nullptr;
+    std::uint8_t* stack_data_ = nullptr;
+    std::size_t stack_size_;
 };
 
-}  // namespace CO
+}  // namespace co
 
 #endif

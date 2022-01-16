@@ -19,8 +19,8 @@ endif()
 
 add_executable(co-test
     main.cpp
-    ExclusiveStack.cpp
-    ShareStack.cpp
+    PromiseTest.cpp
+    RuntimeTest.cpp
 )
 target_include_directories(co-test PUBLIC ${GTEST_INCLUDE_DIRS})
 target_link_libraries(co-test

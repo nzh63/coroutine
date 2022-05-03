@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 nzh63
+ * Copyright 2020-present nzh63
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -265,8 +265,9 @@ auto Promise<T>::then(const F& callback) -> typename std::conditional<  //
     decltype(callback(*(static_cast<const T*>(nullptr)))),              //
     Promise<decltype(callback(*(static_cast<const T*>(nullptr))))>      //
     >::type {
-    using R = typename std::remove_const<typename std::remove_reference<
-        decltype(callback(this->value()))>::type>::type;
+    using R =
+        typename std::remove_const<typename std::remove_reference<decltype(
+            callback(this->value()))>::type>::type;
     return this->_then<F, R>(callback);
 }
 
@@ -306,9 +307,9 @@ T Promise<T>::await() {
 template <typename T>
 template <typename F>
 Promise<std::nullptr_t> Promise<T>::error(const F& callback) {
-    using R = typename std::remove_const<
-        typename std::remove_reference<decltype(callback(
-            *static_cast<std::exception_ptr*>(nullptr)))>::type>::type;
+    using R =
+        typename std::remove_const<typename std::remove_reference<decltype(
+            callback(*static_cast<std::exception_ptr*>(nullptr)))>::type>::type;
     Promise<std::nullptr_t> ret;
     switch (this->state_) {
         case State::Pending: {

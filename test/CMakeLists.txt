@@ -5,10 +5,8 @@ if(NOT ${GTEST_FOUND})
     include(FetchContent)
     FetchContent_Declare(
         googletest
-        GIT_REPOSITORY https://gitee.com/mirrors/googletest.git
-        GIT_TAG        release-1.10.0
+        URL https://github.com/google/googletest/archive/refs/tags/release-1.11.0.tar.gz
     )
-    message(STATUS "download gtest from gitee...")
     set(INSTALL_GTEST OFF CACHE BOOL "")
     set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
     FetchContent_MakeAvailable(googletest)

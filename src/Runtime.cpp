@@ -99,13 +99,14 @@ void Runtime::swichTo(Routine* next) {
 }
 
 void Runtime::run() {
-    while (this->yield())
+    while (this->yield(true))
         ;
 }
 
 void Runtime::guard() {
     assert(this->current_ != this->mainRoutine());
     this->current_->state_ = Routine::State::Idle;
+    this->mainRoutine()->state_ = Routine::State::Ready;
     this->current_->~Routine();
     this->yield();
 }

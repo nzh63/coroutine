@@ -12,8 +12,12 @@ C++实现的协程库
 
 ## 使用方法
 
+### yield 模式
+
+yield 时会将控制器转移给其他协程，并在重新获得控制权后返回、从 yield 之后的语句继续执行。
+
 ```cpp
-auto* runtime = Runtime::instance();
+auto* runtime = co::Runtime::instance();
 runtime->spawn([runtime]() {
     std::cout << "THREAD 1 STARTING" << std::endl;
     int id = 1;
@@ -35,6 +39,28 @@ runtime->spawn([runtime]() {
 runtime->run();
 ```
 
+### Promise/await 模式
+
+如果想要让出控制权并等待某个数据，那么类似于 ECMAScript 的 Promise 模式可能更适合。并且你还可以使用 await 来如同同步调用一样来使用异步 API。
+
+```cpp
+auto async_task =
+    co::Promise<int>([](auto resolver) {
+        co::Runtime::instance()->spawn([resolver]() {
+            // do something
+            resolver->resolve(42);
+        });
+    })
+    .then([](int res /* res = 42 */) { return res * 2; })
+    .then([](int res /* res = 84 */) { return std::to_string(res); });
+std::string final_result /* finally_result = "84" */ = async_task.await();
+```
+
+在 [example/tcp-echo.cpp](./example/tcp-echo.cpp) 中，展示了如何创建并使用一个基于 Promise 的异步 API。
+
+
+### 引入作为依赖
+
 若要将此库作为依赖，可在CmakeLists.txt中添加一下内容：
 ```cmake
 include(FetchContent)
@@ -47,7 +73,6 @@ add_executable(your_executable your_code.cpp)
 target_link_libraries(your_code coroutine)
 ```
 
-更多用法请参照[样例](./example)。
 
 ## License
 Apache-2.0

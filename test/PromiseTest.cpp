@@ -348,14 +348,14 @@ TEST(Promise, triggrtAtOtherCoroutine) {
     runtime->run();
 }
 
-TEST(Promise, await) {
+TEST(Promise, awaitThenResolve) {
     auto* runtime = Runtime::instance();
     Promise<int>::Resolver* resolver = nullptr;
     runtime->spawn([&resolver]() {
         Promise<int> promise([&resolver](Promise<int>::Resolver* _resolver) {
             resolver = _resolver;
         });
-        auto data = promise.await();
+        auto data = await promise;
         EXPECT_EQ(data, 42);
     });
     runtime->spawn([&resolver]() { resolver->resolve(42); });
@@ -369,7 +369,7 @@ TEST(Promise, awaitThenReject) {
         Promise<int> promise([&resolver](Promise<int>::Resolver* _resolver) {
             resolver = _resolver;
         });
-        EXPECT_THROW(promise.await(), std::runtime_error);
+        EXPECT_THROW(await promise, std::runtime_error);
     });
     runtime->spawn([&resolver]() {
         resolver->reject(std::runtime_error("error message"));
@@ -380,13 +380,13 @@ TEST(Promise, awaitThenReject) {
 TEST(Promise, awaitWithFulfilledPromise) {
     auto* runtime = Runtime::instance();
     auto promise = Promise<int>::resolve(42);
-    auto data = promise.await();
+    auto data = await promise;
     EXPECT_EQ(data, 42);
 }
 
 TEST(Promise, awaitWithRejectedPromise) {
     auto* runtime = Runtime::instance();
     auto promise = Promise<int>::reject(std::runtime_error("error message"));
-    EXPECT_THROW(promise.await(), std::runtime_error);
+    EXPECT_THROW(await promise, std::runtime_error);
 }
 }  // namespace co

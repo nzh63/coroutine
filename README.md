@@ -44,16 +44,13 @@ runtime->run();
 如果想要让出控制权并等待某个数据，那么类似于 ECMAScript 的 Promise 模式可能更适合。并且你还可以使用 await 来如同同步调用一样来使用异步 API。
 
 ```cpp
-auto async_task =
-    co::Promise<int>([](auto resolver) {
-        co::Runtime::instance()->spawn([resolver]() {
-            // do something
-            resolver->resolve(42);
-        });
+auto async_task = co::Promise<int>([](auto resolver) {
+        // do something
+        resolver->resolve(42);
     })
     .then([](int res /* res = 42 */) { return res * 2; })
     .then([](int res /* res = 84 */) { return std::to_string(res); });
-std::string final_result /* finally_result = "84" */ = async_task.await();
+std::string final_result /* finally_result = "84" */ = await async_task;
 ```
 
 在 [example/tcp-echo.cpp](./example/tcp-echo.cpp) 中，展示了如何创建并使用一个基于 Promise 的异步 API。
@@ -61,7 +58,7 @@ std::string final_result /* finally_result = "84" */ = async_task.await();
 
 ### 引入作为依赖
 
-若要将此库作为依赖，可在CmakeLists.txt中添加一下内容：
+若要将此库作为依赖，可在CmakeLists.txt中添加以下内容：
 ```cmake
 include(FetchContent)
 FetchContent_Declare(

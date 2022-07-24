@@ -382,6 +382,11 @@ template <typename T>
 const T& Promise<T>::value() const {
     return *reinterpret_cast<const T*>(this->buffer_);
 }
+
+#ifndef CO_NO_AWAIT_MACRO
+#define await (::co::internal::Awaiter()) %
+#endif
+
 }  // namespace co
 
 #endif  // PROMISE_H

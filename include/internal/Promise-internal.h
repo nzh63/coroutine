@@ -210,6 +210,14 @@ class CatchAction final : public Action<T, std::nullptr_t> {
    protected:
     std::function<FR(const std::exception_ptr&)> catch_ = nullptr;
 };
+
+struct Awaiter {
+    template <typename T>
+    auto operator%(T&& promise) const -> decltype(promise.await()) {
+        return promise.await();
+    }
+};
+
 }  // namespace internal
 }  // namespace co
 

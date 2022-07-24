@@ -126,7 +126,7 @@ int main() {
         while (true) {
             using namespace asyncio;
 
-            int fd = accept(listen_fd, nullptr, nullptr, 0).await();
+            int fd = await accept(listen_fd, nullptr, nullptr, 0);
             if (fd < 0) {
                 std::cerr << "accept error: " << strerror(-fd) << std::endl;
                 exit(1);
@@ -135,10 +135,10 @@ int main() {
             runtime->spawn([fd]() {
                 char buf[1024];
                 int n = 0;
-                while ((n = read(fd, buf, sizeof(buf)).await()) > 0) {
+                while ((n = await read(fd, buf, sizeof(buf)) > 0) {
                     std::cout << "fd " << fd << " recv " << n << " bytes"
                               << std::endl;
-                    write(fd, buf, n).await();
+                    await write(fd, buf, n);
                 }
                 std::cout << "close fd: " << fd << std::endl;
                 close(fd);

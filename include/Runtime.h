@@ -27,7 +27,7 @@
 namespace co {
 class Runtime {
    public:
-    typedef Routine::SpawnFunction SpawnFunction;
+    using SpawnFunction = Routine::SpawnFunction;
 
    protected:
     Runtime();

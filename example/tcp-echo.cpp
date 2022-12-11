@@ -135,7 +135,7 @@ int main() {
             runtime->spawn([fd]() {
                 char buf[1024];
                 int n = 0;
-                while ((n = await read(fd, buf, sizeof(buf)) > 0) {
+                while ((n = await read(fd, buf, sizeof(buf)) > 0)) {
                     std::cout << "fd " << fd << " recv " << n << " bytes"
                               << std::endl;
                     await write(fd, buf, n);

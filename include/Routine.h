@@ -29,7 +29,7 @@ namespace co {
 class Runtime;
 class Routine {
    protected:
-    typedef std::function<void()> SpawnFunction;
+    using SpawnFunction = std::function<void()>;
     enum class State : int {
         Idle,    // 空闲，可分配任务
         Peding,  // 等待其他协程返回数据

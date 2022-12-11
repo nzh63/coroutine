@@ -14,7 +14,7 @@ C++实现的协程库
 
 ### yield 模式
 
-yield 时会将控制器转移给其他协程，并在重新获得控制权后返回、从 yield 之后的语句继续执行。
+yield 时会将控制权转移给其他协程，并在重新获得控制权后返回、从 yield 之后的语句继续执行。
 
 ```cpp
 auto* runtime = co::Runtime::instance();

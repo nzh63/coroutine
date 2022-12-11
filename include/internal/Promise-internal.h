@@ -122,11 +122,11 @@ class ActionTo : virtual public BaseAction {
             });
             return;
         }
-        if (this->target_) this->target_->_reject(e);
         for (auto* action : this->sub_actions_) {
             action->reject(e);
         }
         this->sub_actions_.clear();
+        if (this->target_) this->target_->_reject(e);
         delete this;
     }
 
@@ -158,16 +158,14 @@ class Action : public ActionFrom<T>, public ActionTo<R> {
             return;
         }
         FR r = this->then_(value);
-        if (this->target_) this->target_->_resolve(r);
         for (auto* action : this->sub_actions_) {
             action->resolve(r);
         }
         this->sub_actions_.clear();
+        if (this->target_) this->target_->_resolve(std::move(r));
         delete this;
     }
-    void reject(const std::exception_ptr& e) override {
-        ActionTo<R>::reject(e);
-    }
+    using ActionTo<R>::reject;
 
    protected:
     std::function<FR(T)> then_ = nullptr;
@@ -199,11 +197,11 @@ class CatchAction final : public Action<T, std::nullptr_t> {
             return;
         }
         FR r = this->catch_(e);
-        if (this->target_) this->target_->_resolve(r);
         for (auto* action : this->sub_actions_) {
             action->resolve(r);
         }
         this->sub_actions_.clear();
+        if (this->target_) this->target_->_resolve(r);
         delete this;
     }
 
@@ -212,11 +210,33 @@ class CatchAction final : public Action<T, std::nullptr_t> {
 };
 
 struct Awaiter {
-    template <typename T>
+    template <
+        typename T,
+        typename = typename std::enable_if<std::is_base_of<
+            BasePromise, typename std::remove_reference<T>::type>::value>::type>
     auto operator%(T&& promise) const -> decltype(promise.await()) {
         return promise.await();
     }
+
+    template <
+        typename T,
+        typename = typename std::enable_if<!std::is_base_of<
+            BasePromise, typename std::remove_reference<T>::type>::value>::type>
+    T operator%(T&& value) const {
+        return value;
+    }
+
+    template <
+        typename T,
+        typename = typename std::enable_if<!std::is_base_of<
+            BasePromise, typename std::remove_reference<T>::type>::value>::type>
+    T operator%(const T& value) const {
+        return value;
+    }
 };
+
+template <typename T>
+using Awaited = decltype(internal::Awaiter() % std::declval<T>());
 
 }  // namespace internal
 }  // namespace co

@@ -23,26 +23,18 @@
 #include <forward_list>
 #include <functional>
 #include <type_traits>
+#include <utility>
 
 #include "Runtime.h"
 #include "internal/Promise-internal.h"
 
 namespace co {
+
 template <typename T>
 class Promise final : public internal::BasePromise {
    public:
-    class Resolver final : private internal::Action<T, T> {
-       public:
-        Resolver(Promise<T>* promise);
-
-       public:
-        void resolve(const T& value) override;
-        void resolve(const Promise<T>& promise);
-        template <typename E>
-        void reject(E&& e);
-    };
-
-    typedef std::function<void(Resolver*)> Executor;
+    class Resolver;
+    using Executor = std::function<void(Resolver*)>;
 
    public:
     static Promise<T> resolve(const T& value);
@@ -60,28 +52,16 @@ class Promise final : public internal::BasePromise {
     virtual ~Promise();
 
    public:
-    template <typename F>
-    auto then(const F& callback) -> typename std::conditional<          //
-        std::is_base_of<                                                //
-            internal::BasePromise,                                      //
-            decltype(callback(*(static_cast<const T*>(nullptr))))       //
-            >::value,                                                   //
-        decltype(callback(*(static_cast<const T*>(nullptr)))),          //
-        Promise<decltype(callback(*(static_cast<const T*>(nullptr))))>  //
-        >::type;
+    template <typename F, typename R = internal::Awaited<
+                              decltype(std::declval<F>()(std::declval<T>()))>>
+    Promise<R> then(const F& callback);
 
     template <typename F>
     Promise<std::nullptr_t> error(const F& callback);
 
-    template <typename F>
-    auto finally(const F& callback) -> typename std::conditional<  //
-        std::is_base_of<                                           //
-            internal::BasePromise,                                 //
-            decltype(callback(nullptr))                            //
-            >::value,                                              //
-        decltype(callback(nullptr)),                               //
-        Promise<decltype(callback(nullptr))>                       //
-        >::type;
+    template <typename F, typename R = internal::Awaited<
+                              decltype(std::declval<F>()(nullptr))>>
+    Promise<R> finally(const F& callback);
 
     T await();
 
@@ -92,53 +72,6 @@ class Promise final : public internal::BasePromise {
     void settle(State state) override;
 
     const T& value() const;
-
-    template <typename F, typename R,
-              typename = typename std::enable_if<
-                  !std::is_base_of<internal::BasePromise, R>::value>::type>
-    Promise<R> _then(const F& callback) {
-        Promise<R> ret;
-        switch (this->state_) {
-            case State::Pending: {
-                new internal::Action<T, R>(this, &ret, callback);
-                break;
-            }
-            case State::Fulfilled: {
-                auto&& val = callback(this->value());
-                ret._resolve(val);
-                break;
-            }
-            case State::Rejected: {
-                ret._reject(this->exception_);
-                break;
-            }
-        }
-        return ret;
-    }
-
-    template <typename F, typename P,
-              typename = typename std::enable_if<
-                  std::is_base_of<internal::BasePromise, P>::value>::type>
-    P _then(const F& callback) {
-        using R = typename std::remove_const<
-            typename std::remove_reference<decltype(P().value())>::type>::type;
-        Promise<R> ret;
-        switch (this->state_) {
-            case State::Pending: {
-                new internal::Action<T, R, P>(this, &ret, callback);
-                break;
-            }
-            case State::Fulfilled: {
-                return callback(this->value());
-                break;
-            }
-            case State::Rejected: {
-                ret._reject(this->exception_);
-                break;
-            }
-        }
-        return ret;
-    }
 
    protected:
     template <typename>
@@ -151,6 +84,20 @@ class Promise final : public internal::BasePromise {
     friend class internal::CatchAction;
     uint8_t buffer_[sizeof(T)];
     internal::ActionTo<T>* wait_for_ = nullptr;
+};
+
+template <typename T>
+class Promise<T>::Resolver final : private internal::Action<T, T> {
+   protected:
+    Resolver(Promise<T>* promise);
+
+   public:
+    void resolve(const T& value) override;
+    void resolve(const Promise<T>& promise);
+    template <typename E>
+    void reject(E&& e);
+
+    friend Promise<T>;
 };
 
 template <typename T>
@@ -256,31 +203,32 @@ Promise<T>::~Promise() {
 }
 
 template <typename T>
-template <typename F>
-auto Promise<T>::then(const F& callback) -> typename std::conditional<  //
-    std::is_base_of<                                                    //
-        internal::BasePromise,                                          //
-        decltype(callback(*(static_cast<const T*>(nullptr))))           //
-        >::value,                                                       //
-    decltype(callback(*(static_cast<const T*>(nullptr)))),              //
-    Promise<decltype(callback(*(static_cast<const T*>(nullptr))))>      //
-    >::type {
-    using R =
-        typename std::remove_const<typename std::remove_reference<decltype(
-            callback(this->value()))>::type>::type;
-    return this->_then<F, R>(callback);
+template <typename F, typename R>
+Promise<R> Promise<T>::then(const F& callback) {
+    Promise<R> ret;
+    switch (this->state_) {
+        case State::Pending: {
+            using Action =
+                internal::Action<T, R, decltype(callback(this->value()))>;
+            new Action(this, &ret, callback);
+            break;
+        }
+        case State::Fulfilled: {
+            auto&& val = callback(this->value());
+            ret._resolve(std::move(val));
+            break;
+        }
+        case State::Rejected: {
+            ret._reject(this->exception_);
+            break;
+        }
+    }
+    return ret;
 }
 
 template <typename T>
-template <typename F>
-auto Promise<T>::finally(const F& callback) -> typename std::conditional<  //
-    std::is_base_of<                                                       //
-        internal::BasePromise,                                             //
-        decltype(callback(nullptr))                                        //
-        >::value,                                                          //
-    decltype(callback(nullptr)),                                           //
-    Promise<decltype(callback(nullptr))>                                   //
-    >::type {
+template <typename F, typename R>
+Promise<R> Promise<T>::finally(const F& callback) {
     return (*this)
         .then([callback](const T&) { return callback(nullptr); })
         .error([callback](const std::exception_ptr&) {
@@ -307,9 +255,7 @@ T Promise<T>::await() {
 template <typename T>
 template <typename F>
 Promise<std::nullptr_t> Promise<T>::error(const F& callback) {
-    using R =
-        typename std::remove_const<typename std::remove_reference<decltype(
-            callback(*static_cast<std::exception_ptr*>(nullptr)))>::type>::type;
+    using R = decltype(callback(std::declval<std::exception_ptr>()));
     Promise<std::nullptr_t> ret;
     switch (this->state_) {
         case State::Pending: {

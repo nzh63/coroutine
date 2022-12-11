@@ -389,4 +389,11 @@ TEST(Promise, awaitWithRejectedPromise) {
     auto promise = Promise<int>::reject(std::runtime_error("error message"));
     EXPECT_THROW(await promise, std::runtime_error);
 }
+
+TEST(Promise, awaitValue) {
+    int number = 42;
+    EXPECT_EQ(await 42, 42);
+    EXPECT_EQ(await number, 42);
+}
+
 }  // namespace co
